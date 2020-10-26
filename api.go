@@ -46,9 +46,3 @@ func (s *APIServer) start() error {
 func (s *APIServer) configRouter() {
 	s.router.HandleFunc("/", s.handleRoot())
 }
-
-func (s *APIServer) handleRoot() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, "Hello")
-	}
-}

@@ -2,3 +2,5 @@ config.yml
 .vscode/*
 *.code-workspace
 .history/
+migrations/migrations
+pg-rest-api
