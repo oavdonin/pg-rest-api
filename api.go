@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"io"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -44,5 +44,34 @@ func (s *APIServer) start() error {
 
 // configRouter sets the serving paths and according handler functions
 func (s *APIServer) configRouter() {
-	s.router.HandleFunc("/", s.handleRoot())
+	s.router.HandleFunc("/people/{uuid}", s.handleGetPerson()).Methods("GET")
+}
+
+// respond ...
+func (s *APIServer) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if data != nil {
+		result, _ := json.Marshal(data)
+		log.Println(string(result))
+		w.Write(result)
+	}
+}
+
+// error ...
+func (s *APIServer) error(w http.ResponseWriter, r *http.Request, code int, err error) {
+	s.respond(w, r, code, map[string]string{"error": err.Error()})
+}
+
+// handleGetPerson bu UUID
+func (s *APIServer) handleGetPerson() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		person, err := s.FindByUUID(uuid)
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		s.respond(w, r, http.StatusOK, person)
+	}
 }
