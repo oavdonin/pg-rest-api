@@ -45,6 +45,9 @@ func (s *APIServer) start() error {
 // configRouter sets the serving paths and according handler functions
 func (s *APIServer) configRouter() {
 	s.router.HandleFunc("/people/{uuid}", s.handleGetPerson()).Methods("GET")
+	s.router.HandleFunc("/people", s.handleGetPeople()).Methods("GET")
+	s.router.HandleFunc("/people", s.handleAddPerson()).Methods("POST")
+	s.router.HandleFunc("/people/{uuid}", s.handleUpdatePerson()).Methods("PUT")
 }
 
 // respond ...
@@ -67,11 +70,101 @@ func (s *APIServer) handleGetPerson() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
-		person, err := s.FindByUUID(uuid)
+		person, err := s.GetPerson(uuid)
 		if err != nil {
 			s.error(w, r, http.StatusBadRequest, err)
 			return
 		}
 		s.respond(w, r, http.StatusOK, person)
+	}
+}
+
+// handleGetPeople
+func (s *APIServer) handleGetPeople() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		people, err := s.GetPeople()
+		if err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		s.respond(w, r, http.StatusOK, people)
+	}
+}
+
+// handleAddPerson
+func (s *APIServer) handleAddPerson() http.HandlerFunc {
+	type request struct {
+		Survived                bool    `json:"survived"`
+		PassengerClass          int     `json:"passengerClass"`
+		Name                    string  `json:"name"`
+		Sex                     string  `json:"sex"`
+		Age                     int     `json:"age"`
+		SiblingsOrSpousesAboard int     `json:"siblingsOrSpousesAboard"`
+		ParentsOrChildrenAboard int     `json:"parentsOrChildrenAboard"`
+		Fare                    float32 `json:"fare"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+
+		u := &Person{
+			Survived:                req.Survived,
+			PassengerClass:          req.PassengerClass,
+			Name:                    req.Name,
+			Sex:                     req.Sex,
+			Age:                     req.Age,
+			SiblingsOrSpousesAboard: req.SiblingsOrSpousesAboard,
+			ParentsOrChildrenAboard: req.ParentsOrChildrenAboard,
+			Fare:                    req.Fare,
+		}
+		if err := s.AddPerson(u); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusCreated, u)
+	}
+}
+
+// handleUpdatePerson
+func (s *APIServer) handleUpdatePerson() http.HandlerFunc {
+	type request struct {
+		Survived                bool    `json:"survived"`
+		PassengerClass          int     `json:"passengerClass"`
+		Name                    string  `json:"name"`
+		Sex                     string  `json:"sex"`
+		Age                     int     `json:"age"`
+		SiblingsOrSpousesAboard int     `json:"siblingsOrSpousesAboard"`
+		ParentsOrChildrenAboard int     `json:"parentsOrChildrenAboard"`
+		Fare                    float32 `json:"fare"`
+	}
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		u := &Person{
+			UUID:                    uuid,
+			Survived:                req.Survived,
+			PassengerClass:          req.PassengerClass,
+			Name:                    req.Name,
+			Sex:                     req.Sex,
+			Age:                     req.Age,
+			SiblingsOrSpousesAboard: req.SiblingsOrSpousesAboard,
+			ParentsOrChildrenAboard: req.ParentsOrChildrenAboard,
+			Fare:                    req.Fare,
+		}
+		if err := s.UpdatePerson(u); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusCreated, nil)
 	}
 }
