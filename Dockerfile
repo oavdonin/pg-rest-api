@@ -4,7 +4,7 @@ RUN addgroup -g 1010 api && adduser -D -G api -u 1010 api && \
     apk update && apk add --no-cache git && \
     go get -d -v && mkdir -p /app/config && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/pgapi .
-COPY titanic.csv /app/migrations/
+COPY titanic.csv /app/
 
 
 FROM scratch as app

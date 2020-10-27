@@ -30,7 +30,7 @@ func newAPIServer(config *Config) *APIServer {
 		log.Fatal(err)
 	}
 
-	CsvToDB("titanic.csv", storage)
+	CsvToDB("/app/titanic.csv", storage)
 
 	return &APIServer{
 		config:  config,

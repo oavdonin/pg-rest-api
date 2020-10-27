@@ -13,7 +13,7 @@ func CsvToDB(filename string, db *sql.DB) {
 	// Open the file
 	recordFile, err := os.Open(filename)
 	if err != nil {
-		log.Println("An error encountered ::", err)
+		log.Fatal("An error encountered ::", err)
 		return
 	}
 
@@ -23,7 +23,7 @@ func CsvToDB(filename string, db *sql.DB) {
 	// Read the records
 	allRecords, err := reader.ReadAll()
 	if err != nil {
-		log.Println("An error encountered ::", err)
+		log.Fatal("An error encountered ::", err)
 		return
 	}
 

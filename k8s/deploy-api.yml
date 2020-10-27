@@ -1,11 +1,10 @@
 ---
 apiVersion: apps/v1
-kind: StatefulSet
+kind: Deployment
 metadata:
   name: pgapi
   namespace: pgapi
 spec:
-  serviceName: pgapi-svc
   replicas: 1
   selector:
     matchLabels:
@@ -17,9 +16,8 @@ spec:
     spec:
       containers:
       - name: pgapi
-        image: registry.hub.docker.com/avdonin/pgapi:latest
-        imagePullSecrets:
-          - name: regcred
+#        image: registry.hub.docker.com/avdonin/pgapi:latest
+        image: 127.0.0.1:5000/pgapi:latest
         command: ["/app/pgapi","-config-path","/app/config/config.yml"]
         resources:
           requests:
@@ -41,12 +39,30 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 5
         ports:
-        - containerPort: 5432
-          name: postgredb
+        - containerPort: 8080
+          name: pgapi
         volumeMounts:
         - name: pgapi-config
           mountPath: /app/config
+#      imagePullSecrets:
+#        - name: regcred
       volumes:
         - name: pgapi-config
           secret:
             secretName: api-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgapi-svc
+  namespace: pgapi
+  labels:
+    app: pgapi
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    name: pgapi
+  type: NodePort
+  selector:
+    app: pgapi
