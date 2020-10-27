@@ -3,25 +3,34 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-// APIServer ...
+// responseWriter represents http server return code
+type responseWriter struct {
+	http.ResponseWriter
+	code int
+}
+
+// APIServer structure
 type APIServer struct {
 	config  *Config
 	router  *mux.Router
 	storage *sql.DB
 }
 
-// newAPIServer ...
+// newAPIServer init function
 func newAPIServer(config *Config) *APIServer {
 	storage, err := openDB(config.Server.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	CsvToDB("titanic.csv", storage)
 
 	return &APIServer{
 		config:  config,
@@ -30,7 +39,7 @@ func newAPIServer(config *Config) *APIServer {
 	}
 }
 
-// start ...
+// start APIServer function
 func (s *APIServer) start() error {
 
 	s.configRouter()
@@ -48,11 +57,20 @@ func (s *APIServer) configRouter() {
 	s.router.HandleFunc("/people", s.handleGetPeople()).Methods("GET")
 	s.router.HandleFunc("/people", s.handleAddPerson()).Methods("POST")
 	s.router.HandleFunc("/people/{uuid}", s.handleUpdatePerson()).Methods("PUT")
+	s.router.HandleFunc("/people/{uuid}", s.handleDeletePerson()).Methods("DELETE")
+	s.router.HandleFunc("/status", s.handleStatus()).Methods("GET")
+}
+
+// WriteHeader
+func (w *responseWriter) WriteHeader(statusCode int) {
+	w.code = statusCode
+	w.ResponseWriter.WriteHeader(statusCode)
 }
 
 // respond ...
 func (s *APIServer) respond(w http.ResponseWriter, r *http.Request, code int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
 	if data != nil {
 		result, _ := json.Marshal(data)
 		log.Println(string(result))
@@ -60,7 +78,7 @@ func (s *APIServer) respond(w http.ResponseWriter, r *http.Request, code int, da
 	}
 }
 
-// error ...
+// error response
 func (s *APIServer) error(w http.ResponseWriter, r *http.Request, code int, err error) {
 	s.respond(w, r, code, map[string]string{"error": err.Error()})
 }
@@ -72,7 +90,7 @@ func (s *APIServer) handleGetPerson() http.HandlerFunc {
 		uuid := vars["uuid"]
 		person, err := s.GetPerson(uuid)
 		if err != nil {
-			s.error(w, r, http.StatusBadRequest, err)
+			s.error(w, r, http.StatusNotFound, errors.New("Person not found"))
 			return
 		}
 		s.respond(w, r, http.StatusOK, person)
@@ -166,5 +184,28 @@ func (s *APIServer) handleUpdatePerson() http.HandlerFunc {
 			return
 		}
 		s.respond(w, r, http.StatusCreated, nil)
+	}
+}
+
+// handleDeletePerson
+func (s *APIServer) handleDeletePerson() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		u := &Person{
+			UUID: uuid,
+		}
+		if err := s.DeletePerson(u); err != nil {
+			s.error(w, r, http.StatusUnprocessableEntity, err)
+			return
+		}
+		s.respond(w, r, http.StatusCreated, nil)
+	}
+}
+
+// handleStatus
+func (s *APIServer) handleStatus() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.respond(w, r, http.StatusOK, map[string]string{"status": "success"})
 	}
 }
