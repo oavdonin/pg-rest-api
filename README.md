@@ -26,23 +26,23 @@ If you don't have them activated, you can do it by executing:
 
 ### Deploying REST-API service:
 
-This setup script was tested with:
+This setup script was tested with:  
 * MacOS Catalina 10.15.7
 
-In order to build, deploy and start you need to have kubectl context associated with your minikube cluster (automatically with `minikube start`)
-Docker binary should be in your PATH$
-deploy script supports at least zsh and bash
+In order to build, deploy and start you need to have kubectl context associated with your minikube cluster (it happens automatically with `minikube start`)  
+Docker binary should be in your PATH$  
+deploy script supports at least zsh and bash  
 
-**Run ./start.sh from within project root fooler to get your REST-API running on http://localhost:8080**
+**Run ./start.sh from within the project root folder to get your REST-API running on http://localhost:8080**
 
 ### Clean-up
 
-`kubectl delete namespace pgapi
-kubectl delete pv postgredb-data
-unset DOCKER_TLS_VERIFY
-unset DOCKER_HOST
-unset DOCKER_CERT_PATH
-unset MINIKUBE_ACTIVE_DOCKERD`
+`kubectl delete namespace pgapi`  
+`kubectl delete pv postgredb-data`   
+`unset DOCKER_TLS_VERIFY`  
+`unset DOCKER_HOST`  
+`unset DOCKER_CERT_PATH`  
+`unset MINIKUBE_ACTIVE_DOCKERD`  
 
 Delete minikube from your OS
 
