@@ -16,7 +16,6 @@ spec:
     spec:
       containers:
       - name: pgapi
-#        image: registry.hub.docker.com/avdonin/pgapi:latest
         image: pgapi:latest
         imagePullPolicy: IfNotPresent
         command: ["/app/pgapi","-config-path","/app/config/config.yml"]
@@ -45,8 +44,6 @@ spec:
         volumeMounts:
         - name: pgapi-config
           mountPath: /app/config
-#      imagePullSecrets:
-#        - name: regcred
       volumes:
         - name: pgapi-config
           secret:
